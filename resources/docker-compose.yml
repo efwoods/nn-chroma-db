@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  chroma:
+    image: chromadb/chroma
+    volumes:
+      - /data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - PERSIST_DIRECTORY=/data
+      - CHROMA_OPEN_TELEMETRY__ENDPOINT=http://otel-collector:4317/
+      - CHROMA_OPEN_TELEMETRY__SERVICE_NAME=chroma
+    networks:
+      - internal
+    depends_on:
+      - otel-collector
+      - zipkin
+
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - internal
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    networks:
+      - internal
+
+networks:
+  internal:

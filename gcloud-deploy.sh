@@ -1,0 +1,12 @@
+gcloud compute instances create chromadb-cpu-us-east1-d \
+    --zone=us-east1-d \
+    --machine-type=e2-medium \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --boot-disk-size=20GB \
+    --disk=name=chromadb-persist,mode=rw,boot=no,auto-delete=no \
+    --maintenance-policy=MIGRATE \
+    --restart-on-failure \
+    --scopes=https://www.googleapis.com/auth/cloud-platform \
+    --tags=chromadb \
+    --address=chromadb-ip
