@@ -1,1 +1,0 @@
-gcloud compute ssh --zone "us-east1-d" "chromadb-cpu-us-east1-d" --project "neuralnexus-467517"
