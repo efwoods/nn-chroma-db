@@ -33,7 +33,6 @@ services:
     networks:
       - internal
 
-  # docker-compose.yml
   healthcheck:
     image: evdev3/healthcheck          # Use the image from Docker Hub / local
     container_name: healthcheck
@@ -66,8 +65,6 @@ services:
       - NET_ADMIN
       - SYS_ADMIN
     pull_policy: if_not_present  
-    networks:
-      internal
 
 networks:
   internal:
