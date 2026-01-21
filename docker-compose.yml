@@ -1,0 +1,70 @@
+services:
+  chroma:
+    image: chromadb/chroma
+    volumes:
+      - ./data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - PERSIST_DIRECTORY=/data
+      - CHROMA_OPEN_TELEMETRY__ENDPOINT=http://otel-collector:4317/
+      - CHROMA_OPEN_TELEMETRY__SERVICE_NAME=chroma
+    networks:
+      - internal
+    depends_on:
+      - otel-collector
+      - zipkin
+      - healthcheck
+      - vm-autoshutdown-monitor
+
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - internal
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    networks:
+      - internal
+
+  healthcheck:
+    image: evdev3/healthcheck          # Use the image from Docker Hub / local
+    container_name: healthcheck
+    ports:
+      - "9999:9999"
+    environment:
+      - INSTANCE_NAME=${INSTANCE_NAME:-healthcheck}
+    restart: always
+    pull_policy: if_not_present  
+    networks:
+      - internal     # Only pull if not found locally
+
+  # auto-stop-gcp-vm
+  vm-autoshutdown-monitor:
+    image: evdev3/auto-stop-gcp-vm
+    container_name: vm-autoshutdown-monitor
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./logs:/app/logs
+      - ~/.config/gcloud:/root/.config/gcloud
+    environment:
+      - PORTS_TO_MONITOR=8000,9411,4317
+      - IDLE_TIMEOUT_MINUTES=5
+      - CHECK_INTERVAL_SECONDS=5
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    pull_policy: if_not_present  
+
+networks:
+  internal:
